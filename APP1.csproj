@@ -17,6 +17,7 @@
     <None Include="deploy-azure-fast.ps1" />
     <None Include="deploy-to-azure.ps1" />
     <None Include="DEPLOY_TO_AZURE.md" />
+    <None Include="fix-azure.ps1" />
     <None Include="package-for-azure.ps1" />
     <None Include="README.md" />
     <None Include="RELEASE_NOTES.md" />
