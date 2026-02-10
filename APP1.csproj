@@ -1,0 +1,38 @@
+﻿<Project Sdk="Microsoft.NET.Sdk;Microsoft.NET.Sdk.Publish">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <EnableDefaultItems>false</EnableDefaultItems>
+    <UserSecretsId>1ee41f15-aaa3-4e4b-96f5-dd8c4898b3e1</UserSecretsId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include=".github\workflows\deploy.yml" />
+    <None Include="AngelesTandas.slnx" />
+    <None Include="APP_TANDAS_README.md" />
+    <None Include="create-deployment-package.ps1" />
+    <None Include="DELIVERY.md" />
+    <None Include="deploy-azure-fast.ps1" />
+    <None Include="deploy-to-azure.ps1" />
+    <None Include="DEPLOY_TO_AZURE.md" />
+    <None Include="package-for-azure.ps1" />
+    <None Include="README.md" />
+    <None Include="RELEASE_NOTES.md" />
+    <None Include="SECURITY.md" />
+    <None Include="src\AngelesTandas.Web\Pages\Account\ChangePassword.razor" />
+    <None Include="src\AngelesTandas.Web\Pages\Account\Login.razor" />
+    <None Include="src\AngelesTandas.Web\Pages\Account\Logout.razor" />
+    <None Include="src\AngelesTandas.Web\Pages\_Imports.razor" />
+    <None Include="src\AngelesTandas.Web\Shared\_Imports.razor" />
+    <None Include="src\AngelesTandas.Web\web.config" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Azure.Identity" Version="1.17.0" />
+    <PackageReference Include="Microsoft.ApplicationInsights.WorkerService" Version="2.23.0" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.UserSecrets" Version="10.0.0" />
+  </ItemGroup>
+
+</Project>

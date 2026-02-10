@@ -1,0 +1,136 @@
+@layout MainLayout
+@page "/admin/payments/pending"
+@attribute [Authorize(Roles = "Admin")]
+@using AngelesTandas.Application.Dto
+@using Microsoft.AspNetCore.Authorization
+@inject AngelesTandas.Application.IPaymentService PaymentService
+@inject AngelesTandas.Application.IAuditService AuditService
+@inject AuthenticationStateProvider AuthStateProvider
+
+<div class="container-lg mt-5">
+    <h2>📋 Pagos Pendientes de Aprobación</h2>
+
+    @if (pending == null)
+    {
+        <p><em>Cargando...</em></p>
+    }
+    else if (!pending.Any())
+    {
+        <div class="alert alert-info">✓ No hay pagos pendientes.</div>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead class="table-dark">
+                    <tr>
+                        <th>ID</th>
+                        <th>Tanda</th>
+                        <th>Usuario</th>
+                        <th>Monto</th>
+                        <th>Recibo</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var p in pending)
+                    {
+                        <tr>
+                            <td><code>@p.Id.ToString().Substring(0, 8)</code></td>
+                            <td>@p.TandaName</td>
+                            <td>@p.UserName</td>
+                            <td>$@p.Amount</td>
+                            <td>
+                                @if (!string.IsNullOrEmpty(p.ReceiptUri))
+                                {
+                                    <a href="@p.ReceiptUri" target="_blank" class="btn btn-sm btn-info">📎 Ver</a>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-secondary">sin archivo</span>
+                                }
+                            </td>
+                            <td>
+                                <button class="btn btn-sm btn-success" @onclick="() => Approve(p.Id)" disabled="@isProcessing">✓ Aprobar</button>
+                                <button class="btn btn-sm btn-danger" @onclick="() => Reject(p.Id)" disabled="@isProcessing">✗ Rechazar</button>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+
+    @if (!string.IsNullOrEmpty(message))
+    {
+        <div class="alert alert-info mt-3">@message</div>
+    }
+</div>
+
+@code {
+    private List<PendingPaymentItemDto>? pending;
+    private bool isProcessing = false;
+    private string? message;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadPayments();
+    }
+
+    private async Task LoadPayments()
+    {
+        pending = await PaymentService.GetPendingPaymentsAsync();
+    }
+
+    private async Task<string> GetCurrentUserId()
+    {
+        var auth = await AuthStateProvider.GetAuthenticationStateAsync();
+        return auth.User?.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? "system";
+    }
+
+    private async Task Approve(Guid paymentId)
+    {
+        isProcessing = true;
+        message = null;
+        try
+        {
+            var userId = await GetCurrentUserId();
+            await PaymentService.ApprovePaymentAsync(paymentId, userId);
+            await AuditService.LogActionAsync(userId, "ApprovePayment", "Payment", paymentId.ToString(), 
+                AngelesTandas.Domain.AuditSeverity.Info);
+            message = "✓ Pago aprobado";
+            await LoadPayments();
+        }
+        catch (Exception ex)
+        {
+            message = "❌ Error: " + ex.Message;
+        }
+        finally
+        {
+            isProcessing = false;
+        }
+    }
+
+    private async Task Reject(Guid paymentId)
+    {
+        isProcessing = true;
+        message = null;
+        try
+        {
+            var userId = await GetCurrentUserId();
+            await PaymentService.RejectPaymentAsync(paymentId, userId, "Rechazado por admin");
+            await AuditService.LogActionAsync(userId, "RejectPayment", "Payment", paymentId.ToString(), 
+                AngelesTandas.Domain.AuditSeverity.Warning);
+            message = "✓ Pago rechazado";
+            await LoadPayments();
+        }
+        catch (Exception ex)
+        {
+            message = "❌ Error: " + ex.Message;
+        }
+        finally
+        {
+            isProcessing = false;
+        }
+    }
+}

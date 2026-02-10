@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Solution>
+    <Folder Name="/src/">
+        <Project Path="src/AngelesTandas.Web/AngelesTandas.Web.csproj" />
+        <Project Path="src/AngelesTandas.Application/AngelesTandas.Application.csproj" />
+        <Project Path="src/AngelesTandas.Domain/AngelesTandas.Domain.csproj" />
+        <Project Path="src/AngelesTandas.Infrastructure/AngelesTandas.Infrastructure.csproj" />
+    </Folder>
+    <StartupProject Path="src/AngelesTandas.Web/AngelesTandas.Web.csproj" />
+</Solution>

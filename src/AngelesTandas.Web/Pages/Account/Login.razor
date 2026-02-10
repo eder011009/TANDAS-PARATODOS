@@ -1,0 +1,120 @@
+@layout MainLayout
+@page "/account/login"
+@using Microsoft.AspNetCore.Components.Forms
+@using Microsoft.AspNetCore.Identity
+@inject SignInManager<AngelesTandas.Infrastructure.Identity.ApplicationUser> SignInManager
+@inject NavigationManager Nav
+
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h3 class="mb-0">🔐 Acceso Seguro - AngelesTandas</h3>
+                </div>
+                <div class="card-body">
+                    <EditForm Model="@model" OnValidSubmit="@LoginHandler">
+                        <DataAnnotationsValidator />
+                        <ValidationSummary />
+
+                        <div class="mb-3">
+                            <label class="form-label">Email</label>
+                            <InputText class="form-control" @bind-Value="model.Email" />
+                            <ValidationMessage For="@(() => model.Email)" />
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Contraseña</label>
+                            <input type="password" class="form-control" @bind="model.Password" />
+                        </div>
+
+                        <div class="mb-3">
+                            <label>
+                                <InputCheckbox @bind-Value="model.RememberMe" />
+                                Recuérdame (no usar en computadoras públicas)
+                            </label>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary w-100" disabled="@isSubmitting">
+                            @if (isSubmitting)
+                            {
+                                <span>Ingresando...</span>
+                            }
+                            else
+                            {
+                                <span>✓ Ingresar</span>
+                            }
+                        </button>
+                    </EditForm>
+
+                    @if (!string.IsNullOrEmpty(errorMessage))
+                    {
+                        <div class="alert alert-danger mt-3">
+                            <strong>❌ Error de Acceso</strong><br />
+                            @errorMessage
+                        </div>
+                    }
+
+                    <hr class="my-3" />
+
+                    <div class="alert alert-info small">
+                        <strong>⚠️ Recuerda:</strong><br />
+                        • Usa una contraseña fuerte y única<br />
+                        • Nunca compartas tu contraseña<br />
+                        • La sesión expira en 4 horas de inactividad<br />
+                        • Los intentos fallidos bloquean la cuenta 15 minutos
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private LoginModel model = new();
+    private bool isSubmitting = false;
+    private string? errorMessage;
+
+    private async Task LoginHandler()
+    {
+        isSubmitting = true;
+        errorMessage = null;
+
+        try
+        {
+            var result = await SignInManager.PasswordSignInAsync(model.Email, model.Password, model.RememberMe, lockoutOnFailure: true);
+
+            if (result.Succeeded)
+            {
+                Nav.NavigateTo("/");
+            }
+            else if (result.IsLockedOut)
+            {
+                errorMessage = "Cuenta bloqueada por intentos fallidos. Intenta en 15 minutos.";
+            }
+            else if (result.RequiresTwoFactor)
+            {
+                errorMessage = "Verificación de dos factores requerida";
+            }
+            else
+            {
+                errorMessage = "Email o contraseña incorrectos";
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = "Error: " + ex.Message;
+        }
+        finally
+        {
+            isSubmitting = false;
+        }
+    }
+
+    public class LoginModel
+    {
+        public string Email { get; set; } = string.Empty;
+        public string Password { get; set; } = string.Empty;
+        public bool RememberMe { get; set; } = false;
+    }
+}

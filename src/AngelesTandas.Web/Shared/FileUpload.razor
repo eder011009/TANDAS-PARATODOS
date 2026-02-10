@@ -1,0 +1,83 @@
+@using Microsoft.AspNetCore.Components.Forms
+@inject HttpClient Http
+
+<div class="mb-3">
+    <label class="form-label">Seleccionar archivo</label>
+    <InputFile OnChange="OnFileSelected" accept=".jpg,.jpeg,.png,.pdf" />
+    @if (isUploading)
+    {
+        <p class="mt-2"><em>Subiendo...</em></p>
+    }
+    @if (errorMsg != null)
+    {
+        <div class="alert alert-danger mt-2">@errorMsg</div>
+    }
+</div>
+
+@code {
+    [Parameter] public Guid PaymentId { get; set; }
+    [Parameter] public EventCallback<string> OnUploaded { get; set; }
+
+    private bool isUploading = false;
+    private string? errorMsg;
+
+    private async Task OnFileSelected(InputFileChangeEventArgs e)
+    {
+        var file = e.File;
+        if (file == null) return;
+
+        isUploading = true;
+        errorMsg = null;
+
+        try
+        {
+            using var content = new MultipartFormDataContent();
+            await using var stream = file.OpenReadStream(maxAllowedSize: 10 * 1024 * 1024);
+            using var fileContent = new StreamContent(stream);
+            fileContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(file.ContentType ?? "application/octet-stream");
+            content.Add(fileContent, "file", file.Name);
+
+            try
+            {
+                var result = await Http.PostAsync($"/api/payments/{PaymentId}/receipt", content);
+                if (result.IsSuccessStatusCode)
+                {
+                    var json = await result.Content.ReadAsStringAsync();
+                    var options = new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+                    var uploadResult = System.Text.Json.JsonSerializer.Deserialize<UploadResponse>(json, options);
+                    if (uploadResult?.Uri != null)
+                    {
+                        await OnUploaded.InvokeAsync(uploadResult.Uri);
+                    }
+                }
+                else
+                {
+                    errorMsg = "Error al subir archivo: " + result.StatusCode;
+                }
+            }
+            catch (Exception ex)
+            {
+                errorMsg = "Error: " + ex.Message;
+            }
+            finally
+            {
+                isUploading = false;
+                StateHasChanged();
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMsg = "Error: " + ex.Message;
+        }
+        finally
+        {
+            isUploading = false;
+            StateHasChanged();
+        }
+    }
+
+    private class UploadResponse
+    {
+        public string? Uri { get; set; }
+    }
+}

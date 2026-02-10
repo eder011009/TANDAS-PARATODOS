@@ -1,0 +1,139 @@
+@layout MainLayout
+@page "/admin/templates"
+@attribute [Authorize(Roles = "Admin")]
+@using Microsoft.AspNetCore.Authorization
+@inject HttpClient Http
+
+<div class="container-lg mt-5">
+    <h2>📝 Plantillas de Notificación</h2>
+
+    @if (templates == null)
+    {
+        <p><em>Cargando...</em></p>
+    }
+    else if (!templates.Any())
+    {
+        <div class="alert alert-info">No hay plantillas configuradas.</div>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Clave</th>
+                        <th>Asunto</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var t in templates)
+                    {
+                        <tr>
+                            <td><code>@t.Key</code></td>
+                            <td>@t.Subject</td>
+                            <td>
+                                <button class="btn btn-sm btn-primary" @onclick="() => Edit(t.Id)">✏ Editar</button>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+
+    @if (editing != null)
+    {
+        <div class="card mt-4">
+            <div class="card-header bg-primary text-white">
+                <h5>Editar Plantilla: @editing.Key</h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <label class="form-label">Asunto</label>
+                    <input class="form-control" @bind="editing.Subject" />
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Contenido HTML</label>
+                    <textarea class="form-control" rows="8" @bind="editing.BodyHtml"></textarea>
+                </div>
+
+                <div class="mb-3">
+                    <button class="btn btn-success" @onclick="Save">💾 Guardar</button>
+                    <button class="btn btn-secondary" @onclick="() => editing = null">Cancelar</button>
+                </div>
+            </div>
+        </div>
+    }
+
+    @if (!string.IsNullOrEmpty(message))
+    {
+        <div class="alert alert-info mt-3">@message</div>
+    }
+</div>
+
+@code {
+    private List<NotificationTemplate>? templates;
+    private NotificationTemplate? editing;
+    private string? message;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadTemplates();
+    }
+
+    private async Task LoadTemplates()
+    {
+        try
+        {
+            templates = await Http.GetFromJsonAsync<List<NotificationTemplate>>("/api/templates") 
+                ?? new List<NotificationTemplate>();
+        }
+        catch
+        {
+            templates = new List<NotificationTemplate>();
+        }
+    }
+
+    private void Edit(Guid id)
+    {
+        var template = templates?.FirstOrDefault(t => t.Id == id);
+        if (template != null)
+        {
+            editing = new NotificationTemplate
+            {
+                Id = template.Id,
+                Key = template.Key,
+                Subject = template.Subject,
+                BodyHtml = template.BodyHtml
+            };
+        }
+    }
+
+    private async Task Save()
+    {
+        if (editing == null) return;
+        
+        message = null;
+        try
+        {
+            await Http.PutAsJsonAsync($"/api/templates/{editing.Id}", editing);
+            message = "✓ Plantilla actualizada";
+            editing = null;
+            await LoadTemplates();
+        }
+        catch (Exception ex)
+        {
+            message = "❌ Error: " + ex.Message;
+        }
+    }
+
+    public class NotificationTemplate
+    {
+        public Guid Id { get; set; }
+        public string Key { get; set; } = string.Empty;
+        public string Subject { get; set; } = string.Empty;
+        public string BodyHtml { get; set; } = string.Empty;
+    }
+}

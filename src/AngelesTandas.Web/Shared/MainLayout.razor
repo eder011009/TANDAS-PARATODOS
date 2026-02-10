@@ -1,0 +1,81 @@
+@inherits LayoutComponentBase
+@using System.Security.Claims
+@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.AspNetCore.Components.Forms
+@using Microsoft.AspNetCore.Identity
+@inject AuthenticationStateProvider AuthStateProvider
+@inject NavigationManager Nav
+@inject SignInManager<AngelesTandas.Infrastructure.Identity.ApplicationUser> SignInManager
+
+<CascadingAuthenticationState>
+    <AuthorizeView>
+        <Authorized Context="authContext">
+            <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+                <div class="container-fluid">
+                    <a class="navbar-brand" href="/">🏠 AngelesTandas</a>
+                    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                        <span class="navbar-toggler-icon"></span>
+                    </button>
+                    <div class="collapse navbar-collapse" id="navbarNav">
+                        <ul class="navbar-nav ms-auto">
+                            <li class="nav-item">
+                                <a class="nav-link" href="/">Inicio</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="/tandas/create">Crear Tanda</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="/payments/create">Crear Pago</a>
+                            </li>
+                            <AuthorizeView Roles="Admin">
+                                <Authorized Context="adminContext">
+                                    <li class="nav-item dropdown">
+                                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                                            ⚙ Admin
+                                        </a>
+                                        <ul class="dropdown-menu">
+                                            <li><a class="dropdown-item" href="/admin/payments/pending">Pagos Pendientes</a></li>
+                                            <li><a class="dropdown-item" href="/admin/templates">Plantillas</a></li>
+                                        </ul>
+                                    </li>
+                                </Authorized>
+                            </AuthorizeView>
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                                    👤 Mi Cuenta
+                                </a>
+                                <ul class="dropdown-menu">
+                                    <li><a class="dropdown-item" href="/account/change-password">🔐 Cambiar Contraseña</a></li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li><a class="dropdown-item" href="/account/logout">Salir</a></li>
+                                </ul>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </nav>
+
+            <main role="main" class="flex-grow-1">
+                @Body
+            </main>
+
+            <footer class="border-top footer text-muted mt-5 py-3 bg-light">
+                <div class="container text-center">
+                    <small>&copy; 2024 AngelesTandas - Sistema Seguro de Tandas Online</small>
+                </div>
+            </footer>
+        </Authorized>
+        <NotAuthorized Context="notAuthContext">
+            <div class="d-flex justify-content-center align-items-center min-vh-100">
+                <div class="text-center">
+                    <h1>🏠 AngelesTandas</h1>
+                    <p class="lead">Sistema seguro de gestión de tandas online</p>
+                    <a href="/account/login" class="btn btn-primary btn-lg">🔐 Ingresar Seguro</a>
+                </div>
+            </div>
+        </NotAuthorized>
+    </AuthorizeView>
+</CascadingAuthenticationState>
+
+@code {
+}

@@ -1,0 +1,91 @@
+@layout MainLayout
+@page "/payments/create"
+@attribute [Authorize]
+@using Microsoft.AspNetCore.Authorization
+@inject AngelesTandas.Application.IPaymentService PaymentService
+@inject AuthenticationStateProvider AuthStateProvider
+@inject NavigationManager Nav
+
+<div class="container mt-5">
+    <h2>💰 Crear Nuevo Pago</h2>
+
+    <div class="card">
+        <div class="card-body">
+            <div class="mb-3">
+                <label class="form-label">Monto a Pagar</label>
+                <input class="form-control" type="number" @bind="amount" min="0" step="0.01" />
+            </div>
+
+            <button class="btn btn-primary" @onclick="CreatePayment" disabled="@isCreating">
+                @if (isCreating)
+                {
+                    <span>Creando...</span>
+                }
+                else
+                {
+                    <span>✓ Crear Pago</span>
+                }
+            </button>
+        </div>
+    </div>
+
+    @if (paymentId != null)
+    {
+        <div class="alert alert-success mt-4">
+            <strong>✓ Pago creado exitosamente</strong><br />
+            ID: <code>@paymentId</code>
+        </div>
+
+        <div class="card mt-4">
+            <div class="card-header bg-info text-white">
+                <h5>Paso 2: Subir Comprobante</h5>
+            </div>
+            <div class="card-body">
+                <p>Por favor sube tu comprobante de pago (JPG, PNG o PDF):</p>
+                <FileUpload PaymentId="@paymentId.Value" OnUploaded="OnReceiptUploaded" />
+            </div>
+        </div>
+    }
+
+    @if (!string.IsNullOrEmpty(message))
+    {
+        <div class="alert alert-info mt-3">@message</div>
+    }
+</div>
+
+@code {
+    private decimal amount = 0;
+    private Guid? paymentId;
+    private bool isCreating = false;
+    private string? message;
+
+    private async Task CreatePayment()
+    {
+        isCreating = true;
+        message = null;
+
+        try
+        {
+            var auth = await AuthStateProvider.GetAuthenticationStateAsync();
+            var userId = auth.User?.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? "system";
+            
+            paymentId = await PaymentService.CreatePaymentAsync(Guid.Empty, userId, amount);
+            message = "Ahora sube tu comprobante...";
+        }
+        catch (Exception ex)
+        {
+            message = "❌ Error: " + ex.Message;
+        }
+        finally
+        {
+            isCreating = false;
+        }
+    }
+
+    private Task OnReceiptUploaded(string uri)
+    {
+        message = "✓ Comprobante subido exitosamente. Espera aprobación del admin.";
+        StateHasChanged();
+        return Task.CompletedTask;
+    }
+}

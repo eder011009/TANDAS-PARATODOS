@@ -1,0 +1,28 @@
+@page "/tandas"
+@inject AngelesTandas.Application.ITandaService TandaService
+
+<h3>Tandas</h3>
+
+@if (tandas == null)
+{
+    <p>Cargando...</p>
+}
+else
+{
+    <ul>
+        @foreach (var t in tandas)
+        {
+            <li>@t.Name (@t.Status) - Participantes: @t.CurrentParticipants</li>
+        }
+    </ul>
+}
+
+@code {
+    private List<AngelesTandas.Application.Dto.TandaListItemDto>? tandas;
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Por ahora simulación: obtener desde DbContext a través de un servicio no implementado
+        tandas = new List<AngelesTandas.Application.Dto.TandaListItemDto>();
+    }
+}

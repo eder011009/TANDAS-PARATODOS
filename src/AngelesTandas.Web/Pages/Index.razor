@@ -1,0 +1,91 @@
+@layout MainLayout
+@page "/"
+@using AngelesTandas.Application.Dto
+@inject AngelesTandas.Application.ITandaService TandaService
+@inject NavigationManager Nav
+
+<div class="container mt-5">
+    <div class="row mb-4">
+        <div class="col">
+            <h1>🏠 Bienvenido a AngelesTandas</h1>
+            <p class="lead">Sistema online de gestión de tandas</p>
+        </div>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body text-center">
+                    <h5>📋 Tandas Activas</h5>
+                    <h2>@(tandas?.Count ?? 0)</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @if (tandas == null)
+    {
+        <p><em>Cargando tandas...</em></p>
+    }
+    else if (!tandas.Any())
+    {
+        <div class="alert alert-info">No hay tandas disponibles.</div>
+    }
+    else
+    {
+        <h3>Tandas Disponibles</h3>
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Nombre</th>
+                        <th>Participantes</th>
+                        <th>Estado</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var tanda in tandas)
+                    {
+                        <tr>
+                            <td>@tanda.Name</td>
+                            <td>@tanda.CurrentParticipants</td>
+                            <td>
+                                <span class="badge bg-@GetStatusBadge(tanda.Status)">
+                                    @tanda.Status
+                                </span>
+                            </td>
+                            <td>
+                                <button class="btn btn-sm btn-primary" @onclick="() => ViewTanda(tanda.Id)">
+                                    Ver Detalles
+                                </button>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>
+
+@code {
+    private List<TandaListItemDto>? tandas;
+
+    protected override async Task OnInitializedAsync()
+    {
+        tandas = await TandaService.GetTandasAsync();
+    }
+
+    private void ViewTanda(Guid id)
+    {
+        Nav.NavigateTo($"/tanda/{id}");
+    }
+
+    private string GetStatusBadge(String status) => status switch
+    {
+        "Draft" => "secondary",
+        "Active" => "success",
+        "Completed" => "info",
+        _ => "warning"
+    };
+}
