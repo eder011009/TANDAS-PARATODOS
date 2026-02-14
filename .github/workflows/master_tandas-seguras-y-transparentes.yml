@@ -21,13 +21,13 @@ jobs:
           dotnet-version: '8.x'
 
       - name: Restore
-        run: dotnet restore TANDAS-PARATODOS.sln
+        run: dotnet restore TANDAS-PARATODOS.slnx
 
       - name: Build
-        run: dotnet build TANDAS-PARATODOS.sln --configuration Release --no-restore
+        run: dotnet build TANDAS-PARATODOS.slnx --configuration Release --no-restore
 
       - name: Publish
-        run: dotnet publish TANDAS-PARATODOS.sln -c Release -o "${{ github.workspace }}/publish" --no-build
+        run: dotnet publish TANDAS-PARATODOS.slnx -c Release -o "${{ github.workspace }}/publish" --no-build
 
       - name: Upload artifact for deployment
         uses: actions/upload-artifact@v4
@@ -62,3 +62,4 @@ jobs:
           app-name: 'Tandas-Seguras-Y-Transparentes'
           slot-name: 'Production'
           package: .
+
